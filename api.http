@@ -1,0 +1,14 @@
+GET http://127.0.0.1:5000/items
+
+
+###
+GET http://127.0.0.1:5000/item/1
+
+###
+POST http://127.0.0.1:5000/item
+Content-Type: application/json
+
+{
+    "name": "rabbi",
+    "description": "this is description."
+}
