@@ -214,6 +214,13 @@ def addNewUser():
         return jsonify(error="Invalid or missing JSON payload"), 400
 
     required_fields = ['users_roles', 'branch', 'username', 'password', 'confirm_password']
+    user_role = form.get('users_roles', '').lower()
+    if user_role == 'brokertrader':
+        required_fields.append('exchange')
+    
+    if user_role == 'client':
+        required_fields += ['phone', 'email']
+
     missing_fields = [field for field in required_fields if field not in form or not form[field]]
     if missing_fields:
         return jsonify(errors=[f"{field} is required" for field in missing_fields]), 400
@@ -221,8 +228,8 @@ def addNewUser():
     username = form['username'].strip()
     password = form['password']
     cpassword = form['confirm_password']
-    email = form.get('email', '').strip()
-    phone = form.get('phone', '')
+    email = form.get('email', None)
+    phone = form.get('phone', None)
     new_otp = str(utils.random_num(5))
 
     if len(username) > 25:
@@ -233,6 +240,9 @@ def addNewUser():
 
     if password != cpassword:
         return jsonify(errors=["Passwords do not match"]), 400
+    
+    if email and not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email):
+        return jsonify(errors=["Invalid email format"]), 400
 
     # try:
     #     password_errors = utils.validate_password_policy(password)
@@ -248,15 +258,15 @@ def addNewUser():
     new_user = users()
     new_user.username = username
     new_user.password = utils.hash_password(password)
-    new_user.email = email
+    new_user.email = email.strip() if email else email
     # new_user.photo = form.get('photo', '')
-    new_user.users_roles = form['users_roles']
+    new_user.users_roles = user_role
     new_user.acc_type = 'UFTC'  # hardcoded broker name (or replace)
     new_user.user_id = 'b_' + str(uuid.uuid4())
     new_user.branch = form['branch']
-    new_user.name = form.get('name', '')
+    new_user.name = form.get('name', None)
     new_user.phone = phone
-    # new_user.exchange = form.get('exchange', '')
+    new_user.exchange = form.get('exchange', None)
     new_user.email_status = 'Verified'
     new_user.phone_status = 'Verified'
     new_user.account_status = 'inactive'
